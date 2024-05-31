@@ -28,7 +28,7 @@ function Game (){
     
     // set which player currently has their turn
     let currentPlayer = player1;
-
+    
     // create Gameboard
     const board = (function () {
 
@@ -41,8 +41,14 @@ function Game (){
 
         const addMarker = (row, col, marker) => {
             console.log("adding marker");
-            gameBoard[row][col] = marker;
-            console.log(gameBoard);
+
+            if(!isValidMove(row, col)){
+                console.log("Invalid placement!");
+                return false;
+            } else {
+                gameBoard[row][col] = marker;
+                return true;
+            }
         };
 
         const checkRows = () => {
@@ -89,14 +95,60 @@ function Game (){
 
             return false;
         };
+
+        const isValidMove = (row, col) => {
+            if (gameBoard[row][col] === '') return true;
+            else return false;
+        }
         
         return {gameBoard, addMarker, checkRows, checkColumns, 
-            checkDiaganols};
+            checkDiaganols, isValidMove};
     
     })();
 
+    this.mainLoop = function (){
+        do{
+            this.takeTurn();
+            this.switchPlayer();
+        } while (!this.checkForWinner())
+
+        console.log("Game over!")
+        // needs to say who winner is
+    }
+
+
+    this.takeTurn = function (){
+        let moves;
+
+        do {
+            moves = this.getPlayerMove();
+        } while(!board.isValidMove(moves[0], moves[1], currentPlayer.marker))
+
+        board.addMarker(moves[0], moves[1], currentPlayer.marker);
+        this.printBoard();
+    };
+
+    this.getPlayerMove = function(){
+        let playerMove = prompt(`${currentPlayer.name}, make your move:`)
+        
+        return [playerMove[0], playerMove[1]];
+    };
+    
+    this.switchPlayer = function (){
+        switch(currentPlayer){
+            case player1:
+                currentPlayer = player2;
+                break;
+            case player2:
+                currentPlayer = player1;
+                break;
+        }
+    };
+
     this.printBoard = function () {
-        console.log(board);
+        console.log(board.gameBoard[0]);
+        console.log(board.gameBoard[1]);
+        console.log(board.gameBoard[2]);
     };
 
     this.checkForWinner = function () {
@@ -109,19 +161,21 @@ function Game (){
         
     };
     
-    board.addMarker(0,0,"O");
-    board.addMarker(0,1,"X");
-    board.addMarker(0,2,"O");
+    // board.addMarker(0,0,"O");
+    // board.addMarker(0,1,"X");
+    // board.addMarker(0,2,"O");
 
-    board.addMarker(1,0,"X");
-    board.addMarker(1,1,"X");
-    board.addMarker(1,2,"O");
+    // board.addMarker(1,0,"X");
+    // board.addMarker(1,1,"X");
+    // board.addMarker(1,2,"O");
 
-    board.addMarker(2,0,"O");
-    board.addMarker(2,1,"O");
-    board.addMarker(2,2,"X");
+    // board.addMarker(2,0,"O");
+    // board.addMarker(2,1,"O");
+    // board.addMarker(2,2,"X");
+    // board.addMarker(2,2,"X");
 
-    console.log(this.checkForWinner());
+    // console.log(this.checkForWinner());
+
 
 }
 
@@ -134,4 +188,4 @@ function Player (name, marker){
 
 const gameObj = new Game();
 
-// gameObj.printBoard();
+gameObj.mainLoop();
