@@ -1,47 +1,23 @@
-// game board object
-// contains Gameboard array of the board
-
-// object to control the flow of the game => game object
-
-// player object
-
-// DOM/display handler object
-
-
-// *** GAME OBJECT **
-//
-// control the flow of the game
-//
-// Functions:
-// create the board state
-// get player input
-// set up and create the players
-
-function Game (){
-
-    // 
-    // Fn: setup game
-    // create players
-    const player1 = new Player('p1','X');
-    const player2 = new Player('p2','O');
-    // would prompt the user in the browser somehow
+function Game (p1Name = 'p1', p2Name = 'p2'){
     
-    // set which player currently has their turn
+    const player1 = new Player(p1Name,'X');
+    const player2 = new Player(p2Name,'O'); 
+
     let currentPlayer = player1;
     
-    // create Gameboard
-    const board = (function () {
 
+    const board = (function () {
+    
         // contains array of the game board
         const gameBoard = [
             ['','',''],
             ['','',''],
             ['','','']
         ]
-
+    
         const addMarker = (row, col, marker) => {
             console.log("adding marker");
-
+    
             if(!isValidMove(row, col)){
                 console.log("Invalid placement!");
                 return false;
@@ -50,7 +26,7 @@ function Game (){
                 return true;
             }
         };
-
+    
         const checkRows = () => {
             for (let i = 0; i < 3; i++){
                 let firstSymbol = gameBoard[i][0];
@@ -59,12 +35,12 @@ function Game (){
                     firstSymbol === gameBoard[i][2] &&
                     firstSymbol !== ''
                 ) return true;
-
+    
             }
-
+    
             return false;
         };
-
+    
         const checkColumns = () => {
             for (let i = 0; i < 3; i++){
                 let firstSymbol = gameBoard[0][i];
@@ -73,12 +49,12 @@ function Game (){
                     firstSymbol === gameBoard[2][i] &&
                     firstSymbol !== ''
                 ) return true;
-
+    
             }
-
+    
             return false;
         };
-
+    
         const checkDiaganols = () => {
             // check 0,0 diag:
             let firstSymbol = gameBoard[0][0];
@@ -86,16 +62,16 @@ function Game (){
                 firstSymbol === gameBoard[1][1] &&
                 firstSymbol === gameBoard[2][2]
             ) return true;
-
+    
             firstSymbol = gameBoard[0][2];
             if (firstSymbol !== '' &&
                 firstSymbol === gameBoard[1][1] &&
                 firstSymbol === gameBoard[2][0]
             ) return true;
-
+    
             return false;
         };
-
+    
         const isValidMove = (row, col) => {
             if (gameBoard[row][col] === '') return true;
             else return false;
@@ -105,6 +81,15 @@ function Game (){
             checkDiaganols, isValidMove};
     
     })();
+
+    this.setPlayerNames = function (p1,p2) {
+        player1.name = p1;
+        player2.name = p2;
+    }
+
+    this.getCurrentPlayerName = function (){
+        return currentPlayer.name;
+    }
 
     this.mainLoop = function (){
         do{
@@ -116,13 +101,32 @@ function Game (){
         // needs to say who winner is
     }
 
+    this.clickBoardCell = function (row,col){
+        if(board.isValidMove(row, col)){
+            board.addMarker(row,col, currentPlayer.marker);
+            if(!this.checkForWinner()){
+                this.switchPlayer();
+            }
+            else {
+                console.log(`${currentPlayer.name} wins!`)
+            }
+        } else {
+            console.log("Invalid move!");
+        }
+    }
+
+    this.getGameBoard = function (){
+        console.log("retrieving game board");
+        return board.gameBoard;
+    }
+
 
     this.takeTurn = function (){
         let moves;
 
         do {
             moves = this.getPlayerMove();
-        } while(!board.isValidMove(moves[0], moves[1], currentPlayer.marker))
+        } while(!board.isValidMove(moves[0], moves[1]))
 
         board.addMarker(moves[0], moves[1], currentPlayer.marker);
         this.printBoard();
@@ -160,23 +164,6 @@ function Game (){
         else return false;
         
     };
-    
-    // board.addMarker(0,0,"O");
-    // board.addMarker(0,1,"X");
-    // board.addMarker(0,2,"O");
-
-    // board.addMarker(1,0,"X");
-    // board.addMarker(1,1,"X");
-    // board.addMarker(1,2,"O");
-
-    // board.addMarker(2,0,"O");
-    // board.addMarker(2,1,"O");
-    // board.addMarker(2,2,"X");
-    // board.addMarker(2,2,"X");
-
-    // console.log(this.checkForWinner());
-
-
 }
 
 function Player (name, marker){
@@ -185,7 +172,62 @@ function Player (name, marker){
     this.marker = marker;
 }
 
+function DisplayController () {
+    const gameObj = new Game();
+    const domBoard = document.querySelector('.board');
+    const domPlayerTurn = document.querySelector('.player-turn');
+    const dialog = document.querySelector('dialog');
+    const dialogSubmit = document.querySelector(".dialog-submit-names");
+    
+    const initializeGame = () => {
+        dialog.showModal();
+        dialogSubmit.addEventListener('click', ()=>{
+            const p1 = document.querySelector("#p1_name");
+            const p2 = document.querySelector("#p2_name");
+            gameObj.setPlayerNames(p1.value, p2.value);
+            dialog.close();
+        })
+    }
 
-const gameObj = new Game();
+    const updateScreen = () => {
+        const board = gameObj.getGameBoard();
+        clearScreen();
+        domPlayerTurn.textContent = `${gameObj.getCurrentPlayerName()}'s turn.`
+        let rowIndex = 0;
+        board.forEach(row => {
+            console.log('calling updateScreen')
+            let colIndex = 0;
+            row.forEach(cell => {
+                const boardCell = document.createElement('button');
+                boardCell.className = `${rowIndex} ${colIndex}`;
+                boardCell.textContent = cell;
+                
+                addClickEvent(boardCell, rowIndex, colIndex);
+                domBoard.appendChild(boardCell);
+                colIndex++;
+            });
 
-gameObj.mainLoop();
+            const brElem = document.createElement('br');
+            domBoard.appendChild(brElem);
+            rowIndex++;
+        });
+    }
+
+    const addClickEvent = (button, row, col) => {
+        button.addEventListener('click', ()=>{
+            gameObj.clickBoardCell(row, col);
+            // gameObj.printBoard();
+            updateScreen();
+        });
+    }
+
+    function clearScreen (){
+        domBoard.textContent = '';
+    }
+
+    initializeGame();
+    updateScreen();
+
+}
+
+DisplayController();

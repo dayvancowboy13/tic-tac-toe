@@ -1,0 +1,18 @@
+.board>button{
+    box-sizing: border-box;
+    width: 200px;
+    height: 200px;
+    background-color: #5f9ea0;
+    font-size: 100px;
+    border: solid black 4px;
+    padding: auto;
+    margin: 0;
+}
+
+.board>button:active {
+    background-color: hsl(182, 25%, 30%);
+}
+
+.board>button:hover {
+    box-shadow: inset 8px 8px #DAF00F, inset -8px -8px #DAF00F;
+}

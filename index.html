@@ -8,6 +8,19 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
+    <main>
+        <dialog>
+            <h2>Enter player info:</h2>
+            <label for="p1_name">Player 1's name:</label>
+            <input autofocus id="p1_name" name="p1_name" minlength="1" maxlength="10">
+            <label for="p2_name">Player 2's name:</label>
+            <input id="p2_name" name="p2_name" minlength="1" maxlength="10">
+            <button class="dialog-submit-names">Submit</button>
+        </dialog>
+    </main>
+    <div class="container">
+        <h1 class="player-turn"></h1>
+        <div class="board"></div>
+    </div>
 </body>
 </html>
