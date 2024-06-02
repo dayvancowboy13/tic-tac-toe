@@ -4,6 +4,8 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
     const player2 = new Player(p2Name,'O'); 
 
     let currentPlayer = player1;
+    let bRoundWon = false;
+    let roundWinner;
     
 
     const board = (function () {
@@ -90,6 +92,10 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
     this.getCurrentPlayerName = function (){
         return currentPlayer.name;
     }
+    
+    this.getRoundWinnerName = function () {
+        return roundWinner;
+    }
 
     this.mainLoop = function (){
         do{
@@ -109,10 +115,21 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
             }
             else {
                 console.log(`${currentPlayer.name} wins!`)
+                roundWinner = currentPlayer.name;
+                bRoundWon = true;
             }
         } else {
             console.log("Invalid move!");
         }
+    }
+
+    this.getRoundWon = function () {
+        return bRoundWon;
+    }
+
+    this.resetRoundWon = function (){
+        bRoundWon = false;
+        roundWinner = undefined;
     }
 
     this.getGameBoard = function (){
@@ -178,6 +195,7 @@ function DisplayController () {
     const domPlayerTurn = document.querySelector('.player-turn');
     const dialog = document.querySelector('dialog');
     const dialogSubmit = document.querySelector(".dialog-submit-names");
+    const resetContainer = document.querySelector(".reset-container")
     
     const initializeGame = () => {
         dialog.showModal();
@@ -202,7 +220,8 @@ function DisplayController () {
             let colIndex = 0;
             row.forEach(cell => {
                 const boardCell = document.createElement('button');
-                boardCell.className = `${rowIndex} ${colIndex}`;
+                boardCell.id = `${rowIndex} ${colIndex}`;
+                boardCell.className = "board-cell";
                 boardCell.textContent = cell;
                 
                 addClickEvent(boardCell, rowIndex, colIndex);
@@ -214,6 +233,24 @@ function DisplayController () {
             domBoard.appendChild(brElem);
             rowIndex++;
         });
+        if(gameObj.getRoundWon()){
+            console.log("Round won, resetting")
+            domPlayerTurn.textContent = `${gameObj.getRoundWinnerName()}'s wins!`.toUpperCase();
+            addResetButton(board);
+        } else {
+            console.log("Nothing to see here")
+        }
+
+    }
+
+    const addResetButton = () => {
+        const resetButton = document.createElement('button');
+        resetButton.textContent = "RESET";
+        resetButton.className = "reset-button";
+        resetButton.addEventListener("click", ()=>{
+            initializeGame();
+        });
+        resetContainer.appendChild(resetButton);
     }
 
     const addClickEvent = (button, row, col) => {
