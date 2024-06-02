@@ -181,18 +181,21 @@ function DisplayController () {
     
     const initializeGame = () => {
         dialog.showModal();
+        console.log(dialogSubmit.value)
         dialogSubmit.addEventListener('click', ()=>{
             const p1 = document.querySelector("#p1_name");
             const p2 = document.querySelector("#p2_name");
             gameObj.setPlayerNames(p1.value, p2.value);
             dialog.close();
-        })
+            console.log("Closing modal")
+            updateScreen();
+        });
     }
 
     const updateScreen = () => {
         const board = gameObj.getGameBoard();
         clearScreen();
-        domPlayerTurn.textContent = `${gameObj.getCurrentPlayerName()}'s turn.`
+        domPlayerTurn.textContent = `${gameObj.getCurrentPlayerName()}'s turn.`.toUpperCase();
         let rowIndex = 0;
         board.forEach(row => {
             console.log('calling updateScreen')
@@ -226,7 +229,8 @@ function DisplayController () {
     }
 
     initializeGame();
-    updateScreen();
+
+    // updateScreen();
 
 }
 
