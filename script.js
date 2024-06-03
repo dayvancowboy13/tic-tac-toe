@@ -11,11 +11,21 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
     const board = (function () {
     
         // contains array of the game board
-        const gameBoard = [
+        let gameBoard = [
             ['','',''],
             ['','',''],
             ['','','']
-        ]
+        ];
+
+        const resetBoard = () => {
+            for (let i = 0; i < 3; i++){
+                for (let j = 0; j < 3 ; j++){
+                    gameBoard[i][j] = '';
+                }
+            }
+
+            console.log(gameBoard);
+        }
     
         const addMarker = (row, col, marker) => {
             console.log("adding marker");
@@ -75,12 +85,16 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
         };
     
         const isValidMove = (row, col) => {
+            console.log('isValidMove');
+            console.log(`${row} ${col}`);
+            console.log(gameBoard);
+            console.log(gameBoard[row][col]);
             if (gameBoard[row][col] === '') return true;
             else return false;
         }
         
         return {gameBoard, addMarker, checkRows, checkColumns, 
-            checkDiaganols, isValidMove};
+            checkDiaganols, isValidMove, resetBoard};
     
     })();
 
@@ -135,6 +149,20 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
     this.getGameBoard = function (){
         console.log("retrieving game board");
         return board.gameBoard;
+    }
+
+    this.resetGameBoard = function (){
+        console.log("Reseting the game board");
+
+        board.resetBoard();
+
+        console.log(board.gameBoard)
+    }
+
+    this.resetCurrentPlayer = function (){
+        console.log("resetting currentPlayer");
+        currentPlayer = player1;
+        console.log(`Name is ${currentPlayer.name} marker is ${currentPlayer.marker}`);
     }
 
 
@@ -205,18 +233,18 @@ function DisplayController () {
             const p2 = document.querySelector("#p2_name");
             gameObj.setPlayerNames(p1.value, p2.value);
             dialog.close();
-            console.log("Closing modal")
             updateScreen();
         });
     }
 
     const updateScreen = () => {
         const board = gameObj.getGameBoard();
-        clearScreen();
+        clearBoard();
         domPlayerTurn.textContent = `${gameObj.getCurrentPlayerName()}'s turn.`.toUpperCase();
+        console.log(gameObj.getCurrentPlayerName());
         let rowIndex = 0;
+        console.log('calling updateScreen')
         board.forEach(row => {
-            console.log('calling updateScreen')
             let colIndex = 0;
             row.forEach(cell => {
                 const boardCell = document.createElement('button');
@@ -224,7 +252,7 @@ function DisplayController () {
                 boardCell.className = "board-cell";
                 boardCell.textContent = cell;
                 
-                addClickEvent(boardCell, rowIndex, colIndex);
+                addClickEvent(boardCell);
                 domBoard.appendChild(boardCell);
                 colIndex++;
             });
@@ -236,10 +264,24 @@ function DisplayController () {
         if(gameObj.getRoundWon()){
             console.log("Round won, resetting")
             domPlayerTurn.textContent = `${gameObj.getRoundWinnerName()}'s wins!`.toUpperCase();
+            disableBoardCells();
             addResetButton(board);
         } else {
-            console.log("Nothing to see here")
+            console.log("Round not won yet.")
         }
+
+    }
+
+    const disableBoardCells = () => {
+        const boardChildren = domBoard.childNodes;
+        let buttonCount = 0;
+        boardChildren.forEach((node)=>{
+            if (node.nodeName === "BUTTON") {
+                buttonCount++;
+                node.removeEventListener('click', clickStuff);
+            }
+        });
+        console.log(`Button count is ${buttonCount}`);
 
     }
 
@@ -248,21 +290,45 @@ function DisplayController () {
         resetButton.textContent = "RESET";
         resetButton.className = "reset-button";
         resetButton.addEventListener("click", ()=>{
-            initializeGame();
+            resetGame();
+            console.log(`bRoundWon is ${gameObj.getRoundWon()}`);
         });
-        resetContainer.appendChild(resetButton);
+        if (resetContainer.childNodes.length !== 0){
+            resetContainer.removeChild(resetContainer.lastChild);
+        } else {
+            resetContainer.appendChild(resetButton);
+        }
     }
 
-    const addClickEvent = (button, row, col) => {
-        button.addEventListener('click', ()=>{
-            gameObj.clickBoardCell(row, col);
-            // gameObj.printBoard();
-            updateScreen();
-        });
+    const addClickEvent = (button) => {
+        button.addEventListener('click', clickStuff);
     }
 
-    function clearScreen (){
+
+    function clickStuff (event) {
+        console.log("calling clickStuff");
+        const buttonId = event.currentTarget.getAttribute('id');
+        let row = buttonId[0]
+        let col = buttonId[2]
+        console.log(event.currentTarget);
+        
+        gameObj.clickBoardCell(row, col);
+        updateScreen();
+    }
+
+    function clearBoard (){
         domBoard.textContent = '';
+    }
+
+    function resetGame (){
+        domPlayerTurn.textContent = "";
+        // clearBoard();
+        console.log(resetContainer.childElementCount);
+        resetContainer.removeChild(resetContainer.lastChild);
+        gameObj.resetGameBoard();
+        gameObj.resetRoundWon();
+        gameObj.resetCurrentPlayer();
+        updateScreen();
     }
 
     initializeGame();
