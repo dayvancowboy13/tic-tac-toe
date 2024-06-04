@@ -4,7 +4,7 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
     const player2 = new Player(p2Name,'O'); 
 
     let currentPlayer = player1;
-    let bRoundWon = false;
+    let roundState = "playing";
     let roundWinner;
     
 
@@ -37,6 +37,24 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
                 gameBoard[row][col] = marker;
                 return true;
             }
+        };
+
+        const checkTie = () => {
+            let emptyCells = Array();
+            for(let i = 0; i < 3; i++){
+                for (let j = 0; j < 3; j++){
+                    if (gameBoard[i][j] === ''){
+                        emptyCells.push(gameBoard[i][j]);
+                    }
+                }
+            }
+
+            console.log(emptyCells);
+            console.log("empty cells length: " + emptyCells.length);
+            if(emptyCells.length !== 0){
+                return false;
+            } else return true;
+
         };
     
         const checkRows = () => {
@@ -86,15 +104,13 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
     
         const isValidMove = (row, col) => {
             console.log('isValidMove');
-            console.log(`${row} ${col}`);
             console.log(gameBoard);
-            console.log(gameBoard[row][col]);
             if (gameBoard[row][col] === '') return true;
             else return false;
         }
         
         return {gameBoard, addMarker, checkRows, checkColumns, 
-            checkDiaganols, isValidMove, resetBoard};
+            checkDiaganols, isValidMove, resetBoard, checkTie};
     
     })();
 
@@ -126,23 +142,27 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
             board.addMarker(row,col, currentPlayer.marker);
             if(!this.checkForWinner()){
                 this.switchPlayer();
+                if (board.checkTie()){
+                    console.log("tie game!")
+                    roundState = "tie";
+                }
             }
             else {
                 console.log(`${currentPlayer.name} wins!`)
                 roundWinner = currentPlayer.name;
-                bRoundWon = true;
+                roundState = "won";
             }
         } else {
             console.log("Invalid move!");
         }
     }
 
-    this.getRoundWon = function () {
-        return bRoundWon;
+    this.getRoundState = function () {
+        return roundState;
     }
 
-    this.resetRoundWon = function (){
-        bRoundWon = false;
+    this.resetRoundState = function (){
+        roundState = "playing";
         roundWinner = undefined;
     }
 
@@ -153,9 +173,7 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
 
     this.resetGameBoard = function (){
         console.log("Reseting the game board");
-
         board.resetBoard();
-
         console.log(board.gameBoard)
     }
 
@@ -164,8 +182,16 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
         currentPlayer = player1;
         console.log(`Name is ${currentPlayer.name} marker is ${currentPlayer.marker}`);
     }
-
-
+    
+    this.checkForWinner = function () {
+        if (board.checkColumns() ||
+            board.checkRows() ||
+            board.checkDiaganols()){
+                return true;
+            }
+        else return false;
+    };
+    
     this.takeTurn = function (){
         let moves;
 
@@ -179,7 +205,6 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
 
     this.getPlayerMove = function(){
         let playerMove = prompt(`${currentPlayer.name}, make your move:`)
-        
         return [playerMove[0], playerMove[1]];
     };
     
@@ -200,19 +225,9 @@ function Game (p1Name = 'p1', p2Name = 'p2'){
         console.log(board.gameBoard[2]);
     };
 
-    this.checkForWinner = function () {
-        if (board.checkColumns() ||
-            board.checkRows() ||
-            board.checkDiaganols()){
-                return true;
-            }
-        else return false;
-        
-    };
 }
 
 function Player (name, marker){
-    // contains info about the player
     this.name = name;
     this.marker = marker;
 }
@@ -238,12 +253,11 @@ function DisplayController () {
     }
 
     const updateScreen = () => {
+        console.log('calling updateScreen')
         const board = gameObj.getGameBoard();
         clearBoard();
         domPlayerTurn.textContent = `${gameObj.getCurrentPlayerName()}'s turn.`.toUpperCase();
-        console.log(gameObj.getCurrentPlayerName());
         let rowIndex = 0;
-        console.log('calling updateScreen')
         board.forEach(row => {
             let colIndex = 0;
             row.forEach(cell => {
@@ -256,18 +270,20 @@ function DisplayController () {
                 domBoard.appendChild(boardCell);
                 colIndex++;
             });
-
-            const brElem = document.createElement('br');
-            domBoard.appendChild(brElem);
             rowIndex++;
         });
-        if(gameObj.getRoundWon()){
+        if(gameObj.getRoundState() === "won"){
             console.log("Round won, resetting")
             domPlayerTurn.textContent = `${gameObj.getRoundWinnerName()}'s wins!`.toUpperCase();
             disableBoardCells();
             addResetButton(board);
-        } else {
-            console.log("Round not won yet.")
+        } else if (gameObj.getRoundState() === "tie") {
+            domPlayerTurn.textContent = `TIE GAME`;
+            disableBoardCells();
+            addResetButton(board);
+        }
+         else {
+            console.log("Still playing.")
         }
 
     }
@@ -281,8 +297,6 @@ function DisplayController () {
                 node.removeEventListener('click', clickStuff);
             }
         });
-        console.log(`Button count is ${buttonCount}`);
-
     }
 
     const addResetButton = () => {
@@ -291,7 +305,7 @@ function DisplayController () {
         resetButton.className = "reset-button";
         resetButton.addEventListener("click", ()=>{
             resetGame();
-            console.log(`bRoundWon is ${gameObj.getRoundWon()}`);
+            console.log(`roundState is ${gameObj.getRoundState()}`);
         });
         if (resetContainer.childNodes.length !== 0){
             resetContainer.removeChild(resetContainer.lastChild);
@@ -306,12 +320,9 @@ function DisplayController () {
 
 
     function clickStuff (event) {
-        console.log("calling clickStuff");
         const buttonId = event.currentTarget.getAttribute('id');
         let row = buttonId[0]
         let col = buttonId[2]
-        console.log(event.currentTarget);
-        
         gameObj.clickBoardCell(row, col);
         updateScreen();
     }
@@ -322,18 +333,14 @@ function DisplayController () {
 
     function resetGame (){
         domPlayerTurn.textContent = "";
-        // clearBoard();
-        console.log(resetContainer.childElementCount);
         resetContainer.removeChild(resetContainer.lastChild);
         gameObj.resetGameBoard();
-        gameObj.resetRoundWon();
+        gameObj.resetRoundState();
         gameObj.resetCurrentPlayer();
         updateScreen();
     }
 
     initializeGame();
-
-    // updateScreen();
 
 }
 
